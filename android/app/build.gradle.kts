@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.ledger.ledger_app"
-    compileSdk = flutter.compileSdkVersion
+    // 部分插件(如 file_picker)要求编译 API 36，显式抬高 compileSdk。
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
