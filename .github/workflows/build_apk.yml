@@ -23,6 +23,11 @@ jobs:
         run: |
           echo "FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn" >> $GITHUB_ENV
           echo "PUB_HOSTED_URL=https://pub.flutter-io.cn" >> $GITHUB_ENV
+          
+      - name: 修正 local.properties 中的 flutter.sdk 路径(云端需要)
+        run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+
+
 
       - name: 下载依赖
         run: flutter pub get
