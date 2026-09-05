@@ -1,0 +1,83 @@
+name: Build APK & Windows EXE
+
+# 把代码推到 GitHub，就会自动编译出 apk(安卓) 和 exe(Windows)
+# 编译完成后，在 Actions 页面对应任务里下载产物
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ================= 安卓 APK =================
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: 国内镜像加速
+        run: |
+          echo "FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn" >> $GITHUB_ENV
+          echo "PUB_HOSTED_URL=https://pub.flutter-io.cn" >> $GITHUB_ENV
+
+      - name: 下载依赖
+        run: flutter pub get
+
+      - name: 生成数据库代码(.g.dart)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: 编译通用 apk(任何手机都能装)
+        run: flutter build apk --release
+
+      - name: 上传 apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger_app.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: 编译拆分 apk(体积更小,按手机架构)
+        run: flutter build apk --release --split-per-abi
+
+      - name: 上传拆分 apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger_app_split_apks
+          path: build/app/outputs/flutter-apk/*.apk
+
+  # ================= Windows EXE =================
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: 国内镜像加速
+        run: |
+          echo "FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn" >> $GITHUB_ENV
+          echo "PUB_HOSTED_URL=https://pub.flutter-io.cn" >> $GITHUB_ENV
+
+      - name: 下载依赖
+        run: flutter pub get
+
+      - name: 生成数据库代码(.g.dart)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: 编译 exe
+        run: flutter build windows --release
+
+      - name: 压缩 exe 产物
+        run: powershell Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ledger_app_windows.zip -Force
+
+      - name: 上传 exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger_app_windows_exe
+          path: ledger_app_windows.zip
