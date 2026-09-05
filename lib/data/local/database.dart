@@ -162,9 +162,12 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// 月度概览：本月收入合计 / 支出合计 / 结余（CASE WHEN 下推聚合）。
+  /// 注意：drift 的 dateTime 列默认按「秒」存储，原生 SQL 必须用秒比较。
   Stream<MonthlySummary> watchMonthlySummary(int year, int month) {
-    final start = DateTime(year, month, 1).toUtc().millisecondsSinceEpoch;
-    final next = DateTime(year, month + 1, 1).toUtc().millisecondsSinceEpoch;
+    final start =
+        DateTime(year, month, 1).toUtc().millisecondsSinceEpoch ~/ 1000;
+    final next =
+        DateTime(year, month + 1, 1).toUtc().millisecondsSinceEpoch ~/ 1000;
     final query = customSelect(
       '''
       SELECT
@@ -193,8 +196,8 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     DateTime end,
     TransactionType type,
   ) {
-    final s = start.toUtc().millisecondsSinceEpoch;
-    final e = end.toUtc().millisecondsSinceEpoch;
+    final s = start.toUtc().millisecondsSinceEpoch ~/ 1000;
+    final e = end.toUtc().millisecondsSinceEpoch ~/ 1000;
     final query = customSelect(
       '''
       SELECT
@@ -227,23 +230,23 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  /// 趋势聚合：按「天」分组（period 由上层折叠）。
+  /// 趋势聚合：按「天」分组（drift 日期列为秒，取天键后换算成毫秒供图表展示）。
   Stream<List<TrendPoint>> watchTrendAggregation(
     DateTime start,
     DateTime end,
   ) {
-    final s = start.toUtc().millisecondsSinceEpoch;
-    final e = end.toUtc().millisecondsSinceEpoch;
+    final s = start.toUtc().millisecondsSinceEpoch ~/ 1000;
+    final e = end.toUtc().millisecondsSinceEpoch ~/ 1000;
     final query = customSelect(
       '''
       SELECT
-        date AS dayEpoch,
+        CAST(date / 86400 AS INTEGER) AS dayKey,
         type AS txType,
         SUM(amount_cents) AS totalCents
       FROM transactions
       WHERE date >= ? AND date < ?
-      GROUP BY date, type
-      ORDER BY date ASC
+      GROUP BY CAST(date / 86400 AS INTEGER), type
+      ORDER BY CAST(date / 86400 AS INTEGER) ASC
       ''',
       variables: [Variable(s), Variable(e)],
       readsFrom: {transactions},
@@ -251,7 +254,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return query.watch().map((rows) {
       final map = <String, Map<String, int>>{};
       for (final row in rows) {
-        final day = row.read<int>('dayEpoch') ?? 0;
+        final day = row.read<int>('dayKey') ?? 0;
         final type = row.read<String>('txType') ?? 'expense';
         final cents = row.read<int>('totalCents') ?? 0;
         map.putIfAbsent(day.toString(), () => {'expense': 0, 'income': 0});
@@ -259,13 +262,15 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       }
       final result = <TrendPoint>[];
       map.forEach((key, values) {
+        // 天键(UTC 日序号) → 当天 0 点的毫秒时间戳，供图表取「几号」。
+        final dayMs = int.parse(key) * 86400000;
         result.add(TrendPoint(
-          dayEpoch: int.parse(key),
+          dayEpoch: dayMs,
           type: 'expense',
           totalCents: values['expense'] ?? 0,
         ));
         result.add(TrendPoint(
-          dayEpoch: int.parse(key),
+          dayEpoch: dayMs,
           type: 'income',
           totalCents: values['income'] ?? 0,
         ));
