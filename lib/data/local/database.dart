@@ -438,9 +438,9 @@ class CategoryDao extends DatabaseAccessor<AppDatabase> with _$CategoryDaoMixin 
       id: id,
       name: name,
       type: type.code,
-      iconKey: iconKey,
-      colorValue: color,
-      sortOrder: type.isExpense ? 0 : 100,
+      iconKey: Value(iconKey),
+      colorValue: Value(color),
+      sortOrder: Value(type.isExpense ? 0 : 100),
       isBuiltIn: const Value(true),
     );
   }
