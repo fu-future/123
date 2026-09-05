@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/result.dart';
-import '../local/daos/category_dao.dart';
 import '../local/database.dart';
 import '../models/category.dart';
 import '../models/enums.dart';
@@ -69,14 +68,8 @@ class DriftCategoryRepository implements CategoryRepository {
     String fallbackCategoryId,
   ) async {
     try {
-      await _db.transaction((txn) async {
-        // 1) 迁移引用该分类的账目 → 兜底分类（如「其他」），保证数据完整。
-        final migrated = await (txn.update(_db.transactions)
-              ..where((t) => t.categoryId.equals(id)))
-            .write(_db.transactions.categoryId.set(fallbackCategoryId));
-        // 2) 删除分类本体。
-        await (txn.delete(_db.categories)..where((t) => t.id.equals(id))).go();
-      });
+      // 事务迁移 + 删除逻辑在 CategoryDao 内实现（需访问生成的 companion 类型）。
+      await _dao.deleteWithFallback(id, fallbackCategoryId);
       return Result.ok(null);
     } catch (e) {
       return Result.failure('删除分类失败：$e');

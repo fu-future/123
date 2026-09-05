@@ -42,7 +42,8 @@ class CategoryActions extends AsyncNotifier<String?> {
     });
   }
 
-  Future<String?> update(Category c) async {
+  /// 保存修改。命名避开 riverpod 2.6 中 AsyncNotifierBase.update 的同名冲突。
+  Future<String?> save(Category c) async {
     return _run(() async {
       final r = await ref.read(categoryRepositoryProvider).updateCategory(c);
       return r.errorOrNull;

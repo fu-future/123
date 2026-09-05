@@ -45,7 +45,7 @@ class _AiConfigSectionState extends ConsumerState<AiConfigSection> {
       aiApiKey: _key.text.trim(),
       aiModel: _model.text.trim(),
     );
-    await ref.read(settingsProvider.notifier).update(settings);
+    await ref.read(settingsProvider.notifier).save(settings);
     if (!mounted) return;
     _toast('已保存 AI 配置');
   }

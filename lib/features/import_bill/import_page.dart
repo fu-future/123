@@ -75,7 +75,9 @@ class _ImportPageState extends ConsumerState<ImportPage> {
     }).toList();
 
     if (txns.isNotEmpty) {
-      final error = await ref.read(transactionActionsProvider).addBatch(txns);
+      final error = await ref
+          .read(transactionActionsProvider.notifier)
+          .addBatch(txns);
       if (error != null) {
         _toast(error);
         setState(() => _busy = false);

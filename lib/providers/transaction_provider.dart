@@ -60,7 +60,8 @@ class TransactionActions extends AsyncNotifier<String?> {
     });
   }
 
-  Future<String?> update(Transaction t) {
+  /// 保存修改。命名避开 riverpod 2.6 中 AsyncNotifierBase.update 的同名冲突。
+  Future<String?> save(Transaction t) {
     return _run(() async {
       final r =
           await ref.read(transactionRepositoryProvider).updateTransaction(t);

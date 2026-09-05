@@ -1,16 +1,2 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
-part of 'category_dao.dart';
-
-// ignore_for_file: type=lint
-mixin _$CategoryDaoMixin on DatabaseAccessor<dynamic /* = invalid*/ > {
-  $CategoriesTable get categories => attachedDatabase.categories;
-  CategoryDaoManager get managers => CategoryDaoManager(this);
-}
-
-class CategoryDaoManager {
-  final _$CategoryDaoMixin _db;
-  CategoryDaoManager(this._db);
-  $$CategoriesTableTableManager get categories =>
-      $$CategoriesTableTableManager(_db.attachedDatabase, _db.categories);
-}
+// 本文件已被废弃：CategoryDao 移入 ../database.dart，
+// 其代码由 build_runner 生成在 database.g.dart 中。此文件保留空壳避免遗留孤儿 part。

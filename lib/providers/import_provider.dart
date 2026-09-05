@@ -50,10 +50,10 @@ class ImportController extends AsyncNotifier<ImportState> {
 
   /// 解析文本账单。
   Future<void> parseText(String raw) async {
-    final state = state.valueOrNull ?? const ImportState();
+    final current = state.valueOrNull ?? const ImportState();
     final result = _textParser.parseText(raw);
     if (result.isFailure) {
-      state = AsyncValue.data(state.copyWith(
+      state = AsyncValue.data(current.copyWith(
         error: result.errorOrNull,
         clearError: true,
       ));
@@ -65,7 +65,7 @@ class ImportController extends AsyncNotifier<ImportState> {
     for (var i = 0; i < bills.length; i++) {
       if (!bills[i].isValid) excluded.add(i);
     }
-    state = AsyncValue.data(state.copyWith(
+    state = AsyncValue.data(current.copyWith(
       bills: bills,
       excludedIndexes: excluded,
       clearError: true,
@@ -74,9 +74,10 @@ class ImportController extends AsyncNotifier<ImportState> {
 
   /// 解析 CSV。
   Future<void> parseCsv(String raw) async {
+    final current = state.valueOrNull ?? const ImportState();
     final result = _csvParser.parseCsv(raw);
     if (result.isFailure) {
-      state = AsyncValue.data(state.copyWith(
+      state = AsyncValue.data(current.copyWith(
         error: result.errorOrNull,
         clearError: true,
       ));
@@ -87,7 +88,7 @@ class ImportController extends AsyncNotifier<ImportState> {
     for (var i = 0; i < parsed.bills.length; i++) {
       if (!parsed.bills[i].isValid) excluded.add(i);
     }
-    state = AsyncValue.data(state.copyWith(
+    state = AsyncValue.data(current.copyWith(
       bills: parsed.bills,
       excludedIndexes: excluded,
       skippedCount: parsed.skipped,

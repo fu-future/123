@@ -12,7 +12,8 @@ class SettingsController extends AsyncNotifier<AppSettings> {
     return repo.load();
   }
 
-  Future<void> update(AppSettings settings) async {
+  /// 保存设置。命名避开 riverpod 2.6 中 AsyncNotifierBase.update 的同名冲突。
+  Future<void> save(AppSettings settings) async {
     state = AsyncValue.data(settings);
     await ref.read(settingsRepositoryProvider).save(settings);
   }

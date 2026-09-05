@@ -59,9 +59,9 @@ class _CategoryEditPageState extends ConsumerState<CategoryEditPage> {
       sortOrder: _editing?.sortOrder ?? 0,
       isBuiltIn: _editing?.isBuiltIn ?? false,
     );
-    final error = _isEdit
-        ? await ref.read(categoryActionsProvider).update(base)
-        : await ref.read(categoryActionsProvider).add(base);
+    final actions = ref.read(categoryActionsProvider.notifier);
+    final error =
+        _isEdit ? await actions.save(base) : await actions.add(base);
     if (!mounted) return;
     setState(() => _saving = false);
     if (error != null) {
@@ -98,9 +98,8 @@ class _CategoryEditPageState extends ConsumerState<CategoryEditPage> {
     );
     if (confirmed != true || !mounted) return;
     final fallback = BuiltInCategoryIds.fallbackForType(_type.code);
-    final error = await ref
-        .read(categoryActionsProvider)
-        .delete(e, fallback);
+    final error =
+        await ref.read(categoryActionsProvider.notifier).delete(e, fallback);
     if (!mounted) return;
     if (error != null) {
       _toast(error);

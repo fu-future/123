@@ -2,7 +2,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/result.dart';
-import '../local/daos/transaction_dao.dart';
 import '../local/database.dart';
 import '../models/enums.dart';
 import '../models/transaction.dart';
@@ -81,10 +80,8 @@ class DriftTransactionRepository implements TransactionRepository {
   @override
   Future<Result<void>> updateTransaction(Transaction t) async {
     try {
-      await _db.transaction((txn) async {
-        // 保证 updatedAt 刷新以支持未来增量同步。
-        await _dao.updateTransaction(t, updatedAt: DateTime.now());
-      });
+      // 保证 updatedAt 刷新以支持未来增量同步。
+      await _dao.updateTransaction(t, updatedAt: DateTime.now());
       return Result.ok(null);
     } catch (e) {
       return Result.failure('更新失败：$e');
@@ -123,11 +120,8 @@ class DriftTransactionRepository implements TransactionRepository {
                 updatedAt: t.updatedAt ?? now,
               ))
           .toList();
-      // 单事务批量写入，失败整体回滚。
-      await _db.transaction((txn) async {
-        final dao = TransactionDao(_db);
-        await dao.insertAll(models);
-      });
+      // dao.insertAll 内部使用 batch，天然单事务，失败整体回滚。
+      await _dao.insertAll(models);
       return Result.ok(models.length);
     } catch (e) {
       return Result.failure('批量导入失败：$e');

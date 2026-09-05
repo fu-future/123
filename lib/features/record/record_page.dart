@@ -85,7 +85,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       return;
     }
     setState(() => _saving = true);
-    final actions = ref.read(transactionActionsProvider);
+    final actions = ref.read(transactionActionsProvider.notifier);
     final t = Transaction(
       id: _editing?.id ?? '',
       amountCents: _amountCents,
@@ -97,7 +97,7 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       currency: 'CNY',
       source: _editing?.source ?? TransactionSource.manual,
     );
-    final error = _isEdit ? await actions.update(t) : await actions.add(t);
+    final error = _isEdit ? await actions.save(t) : await actions.add(t);
     if (!mounted) return;
     setState(() => _saving = false);
     if (error != null) {
@@ -147,7 +147,8 @@ class _RecordPageState extends ConsumerState<RecordPage> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final error = await ref.read(transactionActionsProvider).delete(e.id);
+    final error =
+        await ref.read(transactionActionsProvider.notifier).delete(e.id);
     if (!mounted) return;
     if (error != null) {
       _toast(error);
